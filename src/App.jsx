@@ -12,6 +12,7 @@ export default function App() {
   const [toastMessage, setToastMessage] = useState('');
   const [showToast, setShowToast] = useState(false);
   const [soldData, setSoldData] = useState({});
+  const [activeTooltip, setActiveTooltip] = useState(null); 
 
   useEffect(() => {
     const sheetCsvUrl = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vT3gCjvbIvAWTAIGpsjEWIoJ8Pks3qNIjjcjx3_VxYMaceVxfNmUd2bbpOlkU4-1fojEe8IKlciO9j0/pub?output=csv';
@@ -100,12 +101,21 @@ export default function App() {
       buttons.push(
         <button
           key={i}
-          disabled={isSold}
-          onClick={() => toggleNumberSelection(i)} 
+          onClick={(e) => {
+            if (isSold) {
+              setActiveTooltip(activeTooltip === i ? null : i);
+            } else {
+              toggleNumberSelection(i);
+              setActiveTooltip(null);
+            }
+          }}
+          onMouseLeave={() => {
+            if(isSold) setActiveTooltip(null);
+          }}
           className={`
             group relative w-10 h-10 rounded-xl font-comic text-sm transition-all duration-200 flex items-center justify-center border-2
             ${isSold 
-              ? 'bg-slate-300 border-slate-400 text-slate-500 cursor-not-allowed opacity-60 hover:opacity-100 hover:z-30 hover:border-slate-600' 
+              ? 'bg-slate-300 border-slate-400 text-slate-500 opacity-60 hover:opacity-100 hover:z-30 hover:border-slate-600 cursor-pointer' 
               : isSelected
                 ? 'bg-yellow-400 border-slate-900 text-slate-900 transform scale-110 shadow-[2px_2px_0px_rgba(15,23,42,1)] z-10'
                 : 'bg-white border-slate-900 text-slate-900 hover:bg-sky-200 cursor-pointer shadow-[2px_2px_0px_rgba(15,23,42,1)] hover:-translate-y-1 hover:shadow-[4px_4px_0px_rgba(15,23,42,1)]'
@@ -114,7 +124,13 @@ export default function App() {
         >
           {i}
           {isSold && (
-            <div className="absolute -top-[3.5rem] left-1/2 -translate-x-1/2 px-4 py-2 bg-purple-700 text-white text-xs font-bold font-comic rounded-xl border-2 border-slate-900 shadow-[2px_2px_0px_rgba(15,23,42,1)] opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 whitespace-nowrap z-[100] pointer-events-none transform translate-y-2 group-hover:translate-y-0">
+            <div className={`
+              absolute -top-[3.5rem] left-1/2 -translate-x-1/2 px-4 py-2 bg-purple-700 text-white text-xs font-bold font-comic rounded-xl border-2 border-slate-900 shadow-[2px_2px_0px_rgba(15,23,42,1)] transition-all duration-200 whitespace-nowrap z-[100] pointer-events-none
+              ${activeTooltip === i 
+                ? 'opacity-100 visible translate-y-0' 
+                : 'opacity-0 invisible group-hover:opacity-100 group-hover:visible transform translate-y-2 group-hover:translate-y-0'
+              }
+            `}>
               Comprado por:<br/>
               <span className="text-yellow-300 text-sm block mt-0.5">{soldData[i]}</span>
               <div className="absolute -bottom-[8px] left-1/2 -translate-x-1/2 w-0 h-0 border-l-[6px] border-l-transparent border-r-[6px] border-r-transparent border-t-[8px] border-t-slate-900"></div>
@@ -176,12 +192,15 @@ export default function App() {
   `;
 
   return (
-    <div className="min-h-screen bg-texture font-text relative overflow-x-hidden selection:bg-purple-300">
+    <div 
+      className="min-h-screen bg-texture font-text relative overflow-x-hidden selection:bg-purple-300"
+      onClick={() => setActiveTooltip(null)}
+    >
       <style>{customStyles}</style>
 
-      <div className="fixed top-[-10%] left-[-10%] w-96 h-96 blob-yellow opacity-40 z-0"></div>
-      <div className="fixed bottom-[10%] right-[-5%] w-[30rem] h-[30rem] blob-teal opacity-30 z-0"></div>
-      <div className="fixed top-[40%] left-[-15%] w-[40rem] h-[20rem] blob-purple opacity-20 z-0 rotate-12"></div>
+      <div className="fixed top-[-10%] left-[-10%] w-96 h-96 blob-yellow opacity-40 z-0 pointer-events-none"></div>
+      <div className="fixed bottom-[10%] right-[-5%] w-[30rem] h-[30rem] blob-teal opacity-30 z-0 pointer-events-none"></div>
+      <div className="fixed top-[40%] left-[-15%] w-[40rem] h-[20rem] blob-purple opacity-20 z-0 rotate-12 pointer-events-none"></div>
 
       <nav className="w-full bg-white/90 border-b-4 border-slate-900 sticky top-0 z-50">
         <div className="max-w-5xl mx-auto px-4 py-3 flex justify-between items-center">
@@ -195,7 +214,7 @@ export default function App() {
         </div>
       </nav>
 
-      <main className="flex-grow relative z-10">
+      <main className="flex-grow relative z-10" onClick={(e) => e.stopPropagation()}>
         
         <header className="relative px-4 pt-12 pb-24 md:pt-20 md:pb-32 max-w-5xl mx-auto flex flex-col items-center">
           
@@ -378,8 +397,19 @@ export default function App() {
                  <span>
                    ¡Importante! Al hacer el Yape o Plin, escribe en el mensaje: <br/>
                    <span className="text-purple-700 bg-purple-100 px-2 py-1 rounded-lg mt-2 inline-block border-2 border-purple-300">
-                     Tus Números + Tu Nombre Completo
+                     Tus Números + Tu Nombre Completo + Numero de Contacto
                    </span>
+                 </span>
+               </p>
+            </div>
+
+            <div className="bg-sky-100 border-4 border-slate-900 border-dashed rounded-3xl p-6 comic-shadow transform -rotate-1 mb-2 relative overflow-hidden">
+               <div className="absolute top-0 left-0 w-full h-2 bg-sky-400"></div>
+               <p className="font-comic font-bold text-slate-800 text-lg md:text-xl text-center flex flex-col sm:flex-row items-center justify-center gap-3">
+                 <span className="text-3xl">🗓️</span>
+                 <span>
+                   El <strong>26 de setiembre</strong> se subirá un video con el sorteo. <br/>
+                   ¡Igualmente nos comunicaremos directamente con las personas ganadoras!
                  </span>
                </p>
             </div>
