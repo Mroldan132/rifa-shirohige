@@ -1,11 +1,17 @@
 import React, { useState, useEffect } from 'react';
-import { Anchor, Cat, Heart, Copy, CheckCircle2, Send, MessageCircle, Info, Landmark } from 'lucide-react';
+import { Anchor, Cat, Heart, Copy, CheckCircle2, Send, MessageCircle, Info, Landmark, Gift } from 'lucide-react';
 import foto1 from '../src/assets/foto1.jpg'; 
+import foto2 from '../src/assets/foto2.jpg'; 
+import foto3 from '../src/assets/foto3.jpeg'; 
+import foto4 from '../src/assets/foto4.jpeg'; 
+import foto5 from '../src/assets/foto5.jpeg'; 
+import premiosImg from '../src/assets/premios.jpeg'; 
+
 export default function App() {
-  const [selectedNumber, setSelectedNumber] = useState(null);
+  const [selectedNumbers, setSelectedNumbers] = useState([]);
   const [toastMessage, setToastMessage] = useState('');
   const [showToast, setShowToast] = useState(false);
-  const [soldNumbers, setSoldNumbers] = useState([]);
+  const [soldData, setSoldData] = useState({});
 
   useEffect(() => {
     const sheetCsvUrl = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vT3gCjvbIvAWTAIGpsjEWIoJ8Pks3qNIjjcjx3_VxYMaceVxfNmUd2bbpOlkU4-1fojEe8IKlciO9j0/pub?output=csv';
@@ -14,24 +20,54 @@ export default function App() {
       try {
         const response = await fetch(sheetCsvUrl);
         const text = await response.text();
-        const numbersList = text
-          .split('\n')
-          .map(row => parseInt(row.trim(), 10))
-          .filter(num => !isNaN(num));
-          console.log(numbersList)
-        setSoldNumbers(numbersList);
+        
+        const data = {};
+        text.split('\n').forEach(row => {
+          const cols = row.split(','); 
+          if (cols.length > 0) {
+            const num = parseInt(cols[0].trim(), 10);
+            if (!isNaN(num)) {
+              const nombre = cols[1] ? cols[1].trim() : 'Vendido';
+              data[num] = nombre;
+            }
+          }
+        });
+        
+        setSoldData(data);
       } catch (error) {
         console.error("Error leyendo el Excel:", error);
       }
     };
 
-        fetchSoldNumbers();
+    fetchSoldNumbers();
   }, []);
 
+  const toggleNumberSelection = (num) => {
+    setSelectedNumbers(prev => {
+      if (prev.includes(num)) {
+        return prev.filter(n => n !== num);
+      } else {
+        return [...prev, num].sort((a, b) => a - b);
+      }
+    });
+  };
+
   const handleCopyInstruction = () => {
-    if (!selectedNumber) return;
-    const text = `¡Hola! Quiero separar el número ${selectedNumber} de la Gran Rifa del Capitán Shirohige ⚓🐱`;
-    copyToClipboard(text, `Ticket ${selectedNumber} listo para pedir por WhatsApp.`);
+    if (selectedNumbers.length === 0) return;
+    
+    let numsStr = "";
+    if (selectedNumbers.length === 1) {
+      numsStr = selectedNumbers[0].toString();
+    } else {
+      const last = selectedNumbers.pop();
+      numsStr = selectedNumbers.join(', ') + ' y ' + last;
+      selectedNumbers.push(last); 
+    }
+
+    const textoPlural = selectedNumbers.length > 1 ? 'los números' : 'el número';
+    const text = `¡Hola! Quiero separar ${textoPlural} ${numsStr} de la Gran Rifa del Shirohige ⚓🐱`;
+    
+    copyToClipboard(text, `Ticket${selectedNumbers.length > 1 ? 's' : ''} ${numsStr} listo para pedir por WhatsApp.`);
   };
 
   const handleCopyData = (text, type) => {
@@ -58,26 +94,33 @@ export default function App() {
   const renderRaffleGrid = () => {
     let buttons = [];
     for (let i = 1; i <= 200; i++) {
-      const isSold = soldNumbers.includes(i);
-      const isSelected = selectedNumber === i;
-
+      const isSold = soldData.hasOwnProperty(i);
+      const isSelected = selectedNumbers.includes(i);
+      
       buttons.push(
         <button
           key={i}
           disabled={isSold}
-          onClick={() => setSelectedNumber(i)}
+          onClick={() => toggleNumberSelection(i)} 
           className={`
-            w-10 h-10 rounded-xl font-comic text-sm transition-all duration-200 flex items-center justify-center border-2
+            group relative w-10 h-10 rounded-xl font-comic text-sm transition-all duration-200 flex items-center justify-center border-2
             ${isSold 
-              ? 'bg-slate-300 border-slate-400 text-slate-500 cursor-not-allowed opacity-60' 
+              ? 'bg-slate-300 border-slate-400 text-slate-500 cursor-not-allowed opacity-60 hover:opacity-100 hover:z-30 hover:border-slate-600' 
               : isSelected
                 ? 'bg-yellow-400 border-slate-900 text-slate-900 transform scale-110 shadow-[2px_2px_0px_rgba(15,23,42,1)] z-10'
                 : 'bg-white border-slate-900 text-slate-900 hover:bg-sky-200 cursor-pointer shadow-[2px_2px_0px_rgba(15,23,42,1)] hover:-translate-y-1 hover:shadow-[4px_4px_0px_rgba(15,23,42,1)]'
             }
           `}
-          title={isSold ? 'Ya comprado' : '¡Elígeme!'}
         >
           {i}
+          {isSold && (
+            <div className="absolute -top-[3.5rem] left-1/2 -translate-x-1/2 px-4 py-2 bg-purple-700 text-white text-xs font-bold font-comic rounded-xl border-2 border-slate-900 shadow-[2px_2px_0px_rgba(15,23,42,1)] opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 whitespace-nowrap z-[100] pointer-events-none transform translate-y-2 group-hover:translate-y-0">
+              Comprado por:<br/>
+              <span className="text-yellow-300 text-sm block mt-0.5">{soldData[i]}</span>
+              <div className="absolute -bottom-[8px] left-1/2 -translate-x-1/2 w-0 h-0 border-l-[6px] border-l-transparent border-r-[6px] border-r-transparent border-t-[8px] border-t-slate-900"></div>
+              <div className="absolute -bottom-[5px] left-1/2 -translate-x-1/2 w-0 h-0 border-l-[6px] border-l-transparent border-r-[6px] border-r-transparent border-t-[8px] border-t-purple-700"></div>
+            </div>
+          )}
         </button>
       );
     }
@@ -179,7 +222,6 @@ export default function App() {
             </div>
           </div>
 
-          {}
           <div className="w-full max-w-4xl flex flex-col md:flex-row items-end justify-center gap-8 mt-10 relative">
             
             <div className="w-full md:w-1/2 bg-white border-4 border-slate-900 rounded-[2.5rem] p-8 comic-shadow relative z-20 md:mb-16 transform md:-rotate-2">
@@ -203,7 +245,7 @@ export default function App() {
             <div className="w-72 h-72 md:w-96 md:h-96 relative z-10 animate-float mt-10 md:mt-0">
                <div className="absolute -left-8 top-8 w-48 h-56 bg-white p-2 pb-8 border-4 border-slate-900 comic-shadow transform -rotate-12 z-0 hidden md:block hover:rotate-0 hover:z-40 transition-all cursor-pointer">
                  <div className="tape absolute -top-3 left-1/2 -translate-x-1/2 w-16 h-6 rotate-3 border border-amber-200 z-20"></div>
-                 <img src={foto1} alt="Shiro Extra" className="w-full h-full object-cover border-2 border-slate-900" />
+                 <img src={foto2} alt="Shiro Extra" className="w-full h-full object-cover border-2 border-slate-900" />
                </div>
 
                <div className="absolute -top-3 left-1/2 -translate-x-1/2 w-6 h-6 bg-red-500 rounded-full shadow-[2px_4px_4px_rgba(0,0,0,0.4)] border-2 border-red-800 z-30">
@@ -223,7 +265,6 @@ export default function App() {
           </div>
         </header>
 
-        {}
         <section id="historia" className="px-4 py-16 relative">
           <div className="max-w-4xl mx-auto">
             <div className="bg-[#fdfbf7] p-8 md:p-12 border-4 border-slate-900 comic-shadow transform -rotate-1 relative">
@@ -236,9 +277,7 @@ export default function App() {
                     Soy Shirohige ⚓
                   </h3>
                   <div className="w-full h-2 bg-purple-500 rounded-full mb-6 border-2 border-slate-900"></div>
-                  <p className="mb-4 text-xl font-bold text-slate-700 leading-relaxed">
-                    TEXTO
-                  </p>
+                  
                   <p className="text-lg font-bold text-slate-600 bg-yellow-100 p-4 rounded-xl border-4 border-slate-900 border-dashed">
                     <Info className="inline-block mr-2 text-yellow-600" />
                     Todo lo recaudado será para mis análisis y tratamiento veterinario. ¡Te lo agradece!
@@ -248,19 +287,19 @@ export default function App() {
                 <div className="w-full md:w-1/2 flex justify-center items-center relative h-72 md:h-80 mt-10 md:mt-0">
                   <div className="absolute left-0 top-0 md:-left-4 md:top-4 w-40 h-48 bg-white p-2 pb-8 border-4 border-slate-900 comic-shadow transform -rotate-12 hover:rotate-0 hover:z-40 transition-all cursor-pointer z-10">
                     <div className="tape absolute -top-3 left-1/2 -translate-x-1/2 w-16 h-6 rotate-6 border border-amber-200 z-20"></div>
-                    <img src="https://placehold.co/400x500/2dd4bf/0f172a?text=Foto+1" alt="Shiro 1" className="w-full h-full object-cover border-2 border-slate-900" />
+                    <img src={foto3} alt="Shiro 1" className="w-full h-full object-cover border-2 border-slate-900" />
                   </div>
                   
                   <div className="absolute right-0 bottom-0 md:-right-4 md:bottom-4 w-44 h-52 bg-white p-2 pb-8 border-4 border-slate-900 comic-shadow transform rotate-12 hover:rotate-0 hover:z-40 transition-all cursor-pointer z-20">
                     <div className="tape absolute -top-3 left-1/2 -translate-x-1/2 w-16 h-6 -rotate-3 border border-amber-200 z-20"></div>
-                    <img src="https://placehold.co/400x500/a78bfa/0f172a?text=Foto+2" alt="Shiro 2" className="w-full h-full object-cover border-2 border-slate-900" />
+                    <img src={foto4} alt="Shiro 2" className="w-full h-full object-cover border-2 border-slate-900" />
                   </div>
                   
                   <div className="absolute z-30 w-48 h-56 bg-white p-2 pb-8 border-4 border-slate-900 comic-shadow transform rotate-2 hover:-translate-y-2 hover:scale-105 transition-all cursor-pointer top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2">
                     <div className="absolute -top-3 left-1/2 -translate-x-1/2 w-6 h-6 bg-red-500 rounded-full shadow-[2px_4px_4px_rgba(0,0,0,0.4)] border-2 border-red-800 z-30">
                       <div className="absolute top-1 left-1 w-2 h-2 bg-white/60 rounded-full"></div>
                     </div>
-                    <img src="https://placehold.co/400x500/bae6fd/0f172a?text=Foto+3" alt="Shiro 3" className="w-full h-full object-cover border-2 border-slate-900" />
+                    <img src={foto5} alt="Shiro 3" className="w-full h-full object-cover border-2 border-slate-900" />
                   </div>
                 </div>
               </div>
@@ -268,12 +307,23 @@ export default function App() {
           </div>
         </section>
 
-        {}
-        <section id="rifa" className="px-4 py-16 relative">
+        <section id="rifa" className="px-4 py-8 relative">
           <div className="max-w-5xl mx-auto">
+            
+            <div className="mb-14 p-4 bg-white border-4 border-slate-900 rounded-[2rem] comic-shadow relative transform rotate-1 hover:rotate-0 transition-transform">
+               <div className="absolute -top-6 -left-4 bg-yellow-400 text-slate-900 font-comic font-bold text-xl md:text-2xl px-6 py-2 rounded-full border-4 border-slate-900 comic-shadow-sm transform -rotate-6 whitespace-nowrap flex items-center gap-2">
+                 <Gift size={24} /> ¡Mira los 4 Premios! 🎁
+               </div>
+               <img 
+                 src={premiosImg} 
+                 alt="4 Premios increíbles" 
+                 className="w-full h-auto rounded-xl border-2 border-slate-900 object-cover mt-2" 
+               />
+            </div>
+
             <div className="bg-white p-6 md:p-10 border-4 border-slate-900 rounded-[2rem] comic-shadow relative z-10">
                <div className="absolute -top-6 left-1/2 -translate-x-1/2 bg-teal-400 text-slate-900 font-comic font-bold text-2xl px-8 py-2 rounded-full border-4 border-slate-900 comic-shadow-sm transform -rotate-2 whitespace-nowrap">
-                 Elige tu Número 🎟️
+                 Elige tus Números 🎟️
                </div>
 
               <div className="mt-8 mb-8 flex flex-col lg:flex-row justify-between items-center gap-6 bg-slate-100 p-4 rounded-2xl border-4 border-slate-900 border-dashed">
@@ -289,19 +339,24 @@ export default function App() {
                   </div>
                 </div>
                 
-                {selectedNumber ? (
+                {selectedNumbers.length > 0 ? (
                   <div className="flex flex-col sm:flex-row items-center gap-3 bg-purple-600 text-white py-3 px-6 rounded-2xl border-4 border-slate-900 comic-shadow-sm animate-in fade-in zoom-in duration-300">
-                    <span className="font-comic font-bold text-lg">Número: <strong className="text-3xl text-yellow-300">{selectedNumber}</strong></span>
+                    <span className="font-comic font-bold text-lg text-center md:text-left">
+                      {selectedNumbers.length > 1 ? 'Números:' : 'Número:'} <br className="sm:hidden"/> 
+                      <strong className="text-2xl md:text-3xl text-yellow-300 break-words max-w-[200px] inline-block">
+                        {selectedNumbers.join(', ')}
+                      </strong>
+                    </span>
                     <button 
                       onClick={handleCopyInstruction}
-                      className="bg-yellow-400 text-slate-900 px-6 py-2 rounded-xl font-comic font-bold text-lg hover:bg-yellow-300 border-2 border-slate-900 shadow-[2px_2px_0px_rgba(15,23,42,1)] hover:-translate-y-1 transition-transform flex items-center gap-2"
+                      className="bg-yellow-400 text-slate-900 px-6 py-2 rounded-xl font-comic font-bold text-lg hover:bg-yellow-300 border-2 border-slate-900 shadow-[2px_2px_0px_rgba(15,23,42,1)] hover:-translate-y-1 transition-transform flex items-center gap-2 shrink-0"
                     >
-                      ¡Lo quiero! <Copy size={20} />
+                      ¡Lo{selectedNumbers.length > 1 ? 's' : ''} quiero! <Copy size={20} />
                     </button>
                   </div>
                 ) : (
                   <div className="font-comic font-bold text-slate-500 animate-pulse text-center">
-                    Toca un número libre para apartarlo
+                    Toca los números libres para apartarlos
                   </div>
                 )}
               </div>
@@ -313,54 +368,69 @@ export default function App() {
           </div>
         </section>
 
-        {}
         <section id="ayuda" className="px-4 py-16">
           <div className="max-w-3xl mx-auto flex flex-col gap-6">
             
-            <div 
-              onClick={() => handleCopyData('994783185', 'Yape/Plin')}
-              className="bg-[#581c87] hover:bg-[#6b21a8] text-white p-4 md:p-6 rounded-[2.5rem] border-4 border-slate-900 comic-shadow flex flex-col md:flex-row items-center justify-between cursor-pointer transition-all transform hover:-translate-y-2 group"
-            >
-              <div className="flex items-center gap-4 mb-4 md:mb-0">
+            <div className="bg-yellow-100 border-4 border-slate-900 border-dashed rounded-3xl p-6 comic-shadow transform rotate-1 mb-2 relative overflow-hidden">
+               <div className="absolute top-0 left-0 w-full h-2 bg-yellow-400"></div>
+               <p className="font-comic font-bold text-slate-800 text-lg md:text-xl text-center flex flex-col sm:flex-row items-center justify-center gap-3">
+                 <Info className="text-amber-600 w-8 h-8 animate-bounce" />
+                 <span>
+                   ¡Importante! Al hacer el Yape o Plin, escribe en el mensaje: <br/>
+                   <span className="text-purple-700 bg-purple-100 px-2 py-1 rounded-lg mt-2 inline-block border-2 border-purple-300">
+                     Tus Números + Tu Nombre Completo
+                   </span>
+                 </span>
+               </p>
+            </div>
+
+            <div className="bg-[#581c87] text-white p-4 md:p-6 rounded-[2.5rem] border-4 border-slate-900 comic-shadow flex flex-col md:flex-row items-center gap-6">
+              
+              <div className="flex items-center gap-4">
                 <div className="flex -space-x-4">
                    <div className="w-16 h-16 rounded-full bg-teal-400 border-4 border-slate-900 flex items-center justify-center font-comic font-bold text-slate-900 text-xl z-10 comic-shadow-sm">plin</div>
                    <div className="w-16 h-16 rounded-full bg-purple-500 border-4 border-slate-900 flex items-center justify-center font-comic font-bold text-white text-xl z-0 comic-shadow-sm">yape</div>
                 </div>
               </div>
               
-              <div className="text-center md:text-left flex-grow md:pl-8">
-                <p className="text-4xl md:text-5xl font-comic font-black tracking-widest text-white text-outline">
-                  994 783 185
-                </p>
-                <p className="text-xl font-bold text-yellow-300 mt-1">
-                  Roldan Reynaga Martin Adriel
-                </p>
-              </div>
-
-              <div className="hidden md:flex flex-col items-center justify-center bg-white text-slate-900 rounded-full w-16 h-16 border-4 border-slate-900 group-hover:bg-yellow-400 transition-colors comic-shadow-sm shrink-0">
-                <Copy size={24} />
-              </div>
-            </div>
-
-            <div 
-              onClick={() => handleCopyData('191-12345678-0-12', 'Cuenta BCP')}
-              className="bg-white hover:bg-slate-50 text-slate-900 p-4 md:p-6 rounded-[2.5rem] border-4 border-slate-900 comic-shadow flex flex-col md:flex-row items-center justify-between cursor-pointer transition-all transform hover:-translate-y-2 group"
-            >
-              <div className="flex items-center gap-4 mb-4 md:mb-0">
-                <div className="w-16 h-16 rounded-full bg-orange-400 border-4 border-slate-900 flex items-center justify-center text-slate-900 z-10 comic-shadow-sm shrink-0">
-                  <Landmark size={32} />
+              <div className="flex-grow flex flex-col gap-4 w-full">
+                
+                <div className="flex items-center justify-between bg-white/10 p-4 rounded-2xl border-2 border-white/20 hover:bg-white/20 transition-colors">
+                   <div className="text-left">
+                     <p className="text-3xl md:text-4xl font-comic font-black tracking-widest text-white text-outline">
+                       994 783 185
+                     </p>
+                     <p className="text-sm md:text-lg font-bold text-yellow-300 mt-1">
+                       Roldan Reynaga Martin Adriel
+                     </p>
+                   </div>
+                   <button 
+                     onClick={(e) => { e.stopPropagation(); handleCopyData('994783185', 'Yape/Plin Martín'); }}
+                     className="flex flex-col items-center justify-center bg-white text-slate-900 rounded-full w-12 h-12 md:w-14 md:h-14 border-4 border-slate-900 hover:bg-yellow-400 transition-colors comic-shadow-sm shrink-0 active:scale-95 cursor-pointer ml-4"
+                     title="Copiar número"
+                   >
+                     <Copy size={20} />
+                   </button>
                 </div>
-                <div className="text-center md:text-left">
-                  <p className="text-xl font-comic font-bold text-slate-500 uppercase">Cuenta BCP</p>
-                  <p className="text-2xl md:text-3xl font-comic font-black text-slate-900">
-                    191-12345678-0-12
-                  </p>
-                  <p className="text-sm font-bold text-slate-500">CCI: 0021911234567801234</p>
-                </div>
-              </div>
 
-              <div className="hidden md:flex flex-col items-center justify-center bg-yellow-400 text-slate-900 rounded-full w-16 h-16 border-4 border-slate-900 group-hover:bg-teal-400 transition-colors comic-shadow-sm shrink-0">
-                <Copy size={24} />
+                <div className="flex items-center justify-between bg-white/10 p-4 rounded-2xl border-2 border-white/20 hover:bg-white/20 transition-colors">
+                   <div className="text-left">
+                     <p className="text-3xl md:text-4xl font-comic font-black tracking-widest text-white text-outline">
+                       943 676 169
+                     </p>
+                     <p className="text-sm md:text-lg font-bold text-yellow-300 mt-1">
+                       Roldan Reynaga Adriana Angela
+                     </p>
+                   </div>
+                   <button 
+                     onClick={(e) => { e.stopPropagation(); handleCopyData('943676169', 'Yape/Plin Adriana'); }}
+                     className="flex flex-col items-center justify-center bg-white text-slate-900 rounded-full w-12 h-12 md:w-14 md:h-14 border-4 border-slate-900 hover:bg-yellow-400 transition-colors comic-shadow-sm shrink-0 active:scale-95 cursor-pointer ml-4"
+                     title="Copiar número"
+                   >
+                     <Copy size={20} />
+                   </button>
+                </div>
+
               </div>
             </div>
 
@@ -369,7 +439,6 @@ export default function App() {
 
       </main>
 
-      {}
       <footer className="bg-slate-900 text-white py-12 mt-10 border-t-8 border-teal-400 relative z-10">
         <div className="max-w-4xl mx-auto px-4 text-center">
           <div className="text-4xl mb-6 flex justify-center items-center gap-4">
