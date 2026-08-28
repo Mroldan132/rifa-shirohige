@@ -15,24 +15,13 @@ export default function App() {
   const [activeTooltip, setActiveTooltip] = useState(null); 
 
   useEffect(() => {
-    const sheetCsvUrl = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vT3gCjvbIvAWTAIGpsjEWIoJ8Pks3qNIjjcjx3_VxYMaceVxfNmUd2bbpOlkU4-1fojEe8IKlciO9j0/pub?output=csv';
+    const scriptUrl = 
+    'https://script.google.com/macros/s/AKfycbxyUEIR3E6GorU4A7ASaDtNcyTCtPmwUwTII_mYwmLqa8mYPdfH5cCHfiidpdsyajaE/exec';
 
     const fetchSoldNumbers = async () => {
       try {
-        const response = await fetch(sheetCsvUrl);
-        const text = await response.text();
-        
-        const data = {};
-        text.split('\n').forEach(row => {
-          const cols = row.split(','); 
-          if (cols.length > 0) {
-            const num = parseInt(cols[0].trim(), 10);
-            if (!isNaN(num)) {
-              const nombre = cols[1] ? cols[1].trim() : 'Vendido';
-              data[num] = nombre;
-            }
-          }
-        });
+        const response = await fetch(scriptUrl);
+        const data = await response.json();
         
         setSoldData(data);
       } catch (error) {
@@ -397,7 +386,7 @@ export default function App() {
                  <span>
                    ¡Importante! Al hacer el Yape o Plin, escribe en el mensaje: <br/>
                    <span className="text-purple-700 bg-purple-100 px-2 py-1 rounded-lg mt-2 inline-block border-2 border-purple-300">
-                     Tus Números + Tu Nombre Completo + Numero de Contacto
+                     Tus Números + Tu Nombre Completo
                    </span>
                  </span>
                </p>
