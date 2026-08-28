@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Anchor, Cat, Heart, Copy, CheckCircle2, Send, MessageCircle, Info, Landmark } from 'lucide-react';
-
+import foto1 from '../src/assets/foto1.jpg'; 
 export default function App() {
   const [selectedNumber, setSelectedNumber] = useState(null);
   const [toastMessage, setToastMessage] = useState('');
@@ -203,7 +203,7 @@ export default function App() {
             <div className="w-72 h-72 md:w-96 md:h-96 relative z-10 animate-float mt-10 md:mt-0">
                <div className="absolute -left-8 top-8 w-48 h-56 bg-white p-2 pb-8 border-4 border-slate-900 comic-shadow transform -rotate-12 z-0 hidden md:block hover:rotate-0 hover:z-40 transition-all cursor-pointer">
                  <div className="tape absolute -top-3 left-1/2 -translate-x-1/2 w-16 h-6 rotate-3 border border-amber-200 z-20"></div>
-                 <img src="https://placehold.co/400x500/fde047/0f172a?text=Foto+Extra" alt="Shiro Extra" className="w-full h-full object-cover border-2 border-slate-900" />
+                 <img src={foto1} alt="Shiro Extra" className="w-full h-full object-cover border-2 border-slate-900" />
                </div>
 
                <div className="absolute -top-3 left-1/2 -translate-x-1/2 w-6 h-6 bg-red-500 rounded-full shadow-[2px_4px_4px_rgba(0,0,0,0.4)] border-2 border-red-800 z-30">
@@ -211,7 +211,7 @@ export default function App() {
                </div>
                
                <img 
-                 src="https://placehold.co/600x600/ffffff/0f172a?text=Pon+Foto+de\nShirohige+Aqui" 
+                 src={foto1}
                  alt="Shirohige" 
                  className="w-full h-full object-cover rounded-3xl border-8 border-white comic-shadow transform rotate-3 relative z-20 bg-white"
                />
